@@ -1,0 +1,11 @@
+name: db-check
+on :
+    push
+
+jobs:
+    db:
+        runs-on:   ubuntu-latest #GitHub crée un runner Ubuntu
+        steps:
+           - uses : actions/checkout@v4 #recupère mon projet
+           - run:   bash db/setup.sh #démarre postgres ,crée la base,les tables ,exec init.sql
+           - run :  PGPASSWORD=postgres psql -h localhost -U postgres -d tp -c "SELECT * FROM students;"
