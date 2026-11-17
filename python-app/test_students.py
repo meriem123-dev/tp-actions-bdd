@@ -1,41 +1,27 @@
-import os
+import pytest
 
-import psycopg2
-
-
-def get_connection():
-    return psycopg2.connect(
-        host=os.getenv("DB_HOST", "localhost"),
-        port=os.getenv("DB_PORT", "5432"),
-        dbname=os.getenv("DB_NAME", "tp"),
-        user=os.getenv("DB_USER", "postgres"),
-        password=os.getenv("DB_PASSWORD", "postgres"),
-    )
+from students import add_student, average_grade, get_connection, get_student
 
 
-def add_student(conn, name, grade):
-    """Ajoute un étudiant et retourne son id."""
-    with conn, conn.cursor() as cur:
-        cur.execute(
-            "INSERT INTO students (name, grade) VALUES (%s, %s) RETURNING id",
-            (name, grade),
-        )
-        return cur.fetchone()[0]
+@pytest.fixture
+def conn():
+    c = get_connection()
+    with c, c.cursor() as cur:
+        cur.execute("DELETE FROM students")
+    yield c
+    c.close()
 
 
-def get_student(conn, student_id):
-    """Retourne {"name": ..., "grade": ...}, ou None si l'étudiant n'existe pas."""
-    with conn, conn.cursor() as cur:
-        cur.execute("SELECT name, grade FROM students WHERE id = %s", (student_id,))
-        row = cur.fetchone()
-        if row is None:
-            return None
-        return {"name": row[0], "grade": float(row[1])}
+def test_ajouter_et_lire(conn):
+    student_id = add_student(conn, "Amel", 15.5)
+    assert get_student(conn, student_id) == {"name": "Amel", "grade": 15.5}
 
 
-def average_grade(conn):
-    """Retourne la moyenne des notes, ou None s'il n'y a aucun étudiant."""
-    with conn, conn.cursor() as cur:
-        cur.execute("SELECT AVG(grade) FROM students")
-        value = cur.fetchone()[0]
-        return float(value) if value is not None else None
+def test_etudiant_inconnu(conn):
+    assert get_student(conn, 9999) is None
+
+
+def test_moyenne(conn):
+    add_student(conn, "Amel", 10)
+    add_student(conn, "Karim", 14)
+    assert average_grade(conn) == 12.0
