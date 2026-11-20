@@ -80,7 +80,7 @@ jobs:
       - name : Installer les dépendances
         run : composer install --no-interaction
       - name : tests 
-        run : vendor/bin/phpunit /tests
+        run : vendor/bin/phpunit tests/
 
     
       
