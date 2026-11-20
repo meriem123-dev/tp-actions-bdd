@@ -2,30 +2,85 @@
 name: ci
 
 on:
-  push:
-  pull_request:
+  [push,pull_request]
 
 jobs:
   python:
     runs-on: ubuntu-latest
-
     defaults:
       run:
         working-directory: python-app
 
     steps:
       - uses: actions/checkout@v4
-
       - name: Configurer Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
       - name: Préparer PostgreSQL
         run: bash ../db/setup.sh
-
       - name: Installer les dépendances
         run: pip install -r requirements.txt
-
       - name: Exécuter les tests
         run: pytest -v
+    
+  node:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: node-app
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configurer node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Préparer PostgreSQL
+        run: bash ../db/setup.sh
+      - name : Installer les dépendances
+        run : npm ci
+      - name : tests 
+        run : npm test
+    
+  java:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: java-app
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configurer java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+      - name: Préparer PostgreSQL
+        run: bash ../db/setup.sh
+      - name : Installer les dépendances et tests
+        run : mvn -B package
+
+
+  php:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: php-app
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configurer php
+        uses: shivammathur/setup-php@v2
+        with:
+          extensions: pdo,pdo_pgsql
+          php-version: "8.3"
+      - name: Préparer PostgreSQL
+        run: bash ../db/setup.sh
+      - name : Installer les dépendances
+        run : composer install --no-interaction
+      - name : tests 
+        run : vendor/bin/phpunit
+
+    
+      
