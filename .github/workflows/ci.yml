@@ -17,10 +17,20 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
       - name: Configurer Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Préparer PostgreSQL
+        run: bash ../db/setup.sh
+
+      - name: Installer les dépendances
+        run: pip install -r requirements.txt
+
+      - name: Exécuter les tests
+        run: pytest -v
     
   node:
     runs-on: ubuntu-latest
